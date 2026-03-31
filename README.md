@@ -48,7 +48,7 @@ ImageForge is a command-line image processing tool built in Python. It lets you 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/imageforge.git
+git clone https://github.com/davicbtoliveira/imageforge.git
 cd imageforge
 ```
 
