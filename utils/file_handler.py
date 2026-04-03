@@ -5,8 +5,8 @@ from PIL import Image, UnidentifiedImageError
 
 def validate_image(path: str) -> Image.Image:
     try:
-        im = Image.open(path)
-        im.verify()
+        img = Image.open(path)
+        img.verify()
         return Image.open(path)
     except UnidentifiedImageError:
         raise ValueError(f"Not a valid image file: {path}")
