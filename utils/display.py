@@ -14,7 +14,7 @@ def print_banner(version: float) -> None:
   |___|__|_|  (____  /\___  / \___  >___  / \____/|__|  \___  / \___  >
             \/     \//_____/      \/    \/             /_____/      \/
   """
-    click.echo(click.style(f"${banner} v.${version}", fg="cyan", bold=True))
+    click.echo(click.style(f"${banner} v.{version}", fg="cyan", bold=True))
 
 
 def print_success(message: str) -> None:
