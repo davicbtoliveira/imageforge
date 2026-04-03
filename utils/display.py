@@ -17,7 +17,7 @@ def print_banner(version: float) -> None:
     click.echo(click.style(f"${banner} v.${version}", fg="cyan", bold=True))
 
 
-def print_success() -> None:
+def print_success(message: str) -> None:
     click.echo(click.style("  ✔ Success", fg="green"))
 
 
