@@ -21,12 +21,12 @@ ImageForge is a command-line image processing tool built in Python. It lets you 
 
 > 🚧 **In development** — core utilities are done, editor modules are in progress.
 
-| Module               | Status        |
-|----------------------|---------------|
+| Module               | Status         |
+|----------------------|----------------|
 | `utils/display.py`   | ✅ Done        |
 | `utils/file_handler.py` | ✅ Done     |
-| `editor/resize.py`   | 🔄 In progress |
-| `editor/optimize.py` | 🔄 In progress |
+| `editor/resize.py`   | ✅ Done        |
+| `editor/optimize.py` | ✅ Done        |
 | `editor/enhance.py`  | 🔄 In progress |
 | `editor/pipeline.py` | ⏳ Pending     |
 | `tests/`             | ⏳ Pending     |
