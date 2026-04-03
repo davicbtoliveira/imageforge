@@ -1,49 +1,39 @@
 # ImageForge
 
+```
+  .___                             ___________
+  |   | _____ _____     ____   ____\_   _____/__________  ____   ____
+  |   |/     \\__  \   / ___\_/ __ \|    __)/  _ \_  __ \/ ___\_/ __ \
+  |   |  Y Y  \/ __ \_/ /_/  >  ___/|     \(  <_> )  | \/ /_/  >  ___/
+  |___|__|_|  (____  /\___  / \___  >___  / \____/|__|  \___  / \___  >
+            \/     \//_____/      \/    \/             /_____/      \/
+```
+
 > A Python CLI tool to resize, optimize, and enhance images — locally, fast, and without a GUI.
 
 ---
 
-## What is it?
+## Features
 
-ImageForge is a command-line image processing tool built in Python. It lets you manipulate images directly from your terminal — no internet connection, no third-party service, no graphical interface needed.
-
-**What it does:**
-- **Resize** images by fixed dimensions or a percentage scale factor
-- **Optimize** images by compressing file size and converting formats (JPEG, PNG, WebP)
-- **Enhance** image quality by adjusting brightness, contrast, sharpness, and saturation
-- **Inspect** image metadata (dimensions, format, file size, EXIF data)
-- **Pipeline** multiple operations in a single command pass
-
----
-
-## Project Status
-
-> 🚧 **In development** — core utilities are done, editor modules are in progress.
-
-| Module               | Status         |
-|----------------------|----------------|
-| `utils/display.py`   | ✅ Done        |
-| `utils/file_handler.py` | ✅ Done     |
-| `editor/resize.py`   | ✅ Done        |
-| `editor/optimize.py` | ✅ Done        |
-| `editor/enhance.py`  | 🔄 In progress |
-| `editor/pipeline.py` | ⏳ Pending     |
-| `tests/`             | ⏳ Pending     |
+- **Resize** — by width, height, or scale factor with aspect ratio control
+- **Optimize** — compress file size and convert between formats (JPEG, PNG, WebP)
+- **Enhance** — adjust brightness, contrast, sharpness, saturation, denoise, and grayscale
+- **Pipeline** — chain multiple operations in a single pass, saving only once
+- **Info** — inspect image metadata, dimensions, and EXIF data
 
 ---
 
 ## Tech Stack
 
-| Purpose            | Library     |
-|--------------------|-------------|
-| CLI interface      | `click`     |
-| Image processing   | `Pillow`    |
-| Testing            | `pytest`    |
+| Purpose          | Library  |
+|------------------|----------|
+| CLI interface    | `click`  |
+| Image processing | `Pillow` |
+| Testing          | `pytest` |
 
 ---
 
-## Getting Started
+## Installation
 
 ### 1. Clone the repository
 
@@ -64,39 +54,80 @@ source venv/bin/activate
 venv\Scripts\activate
 ```
 
-### 3. Install dependencies
+### 3. Install the package
 
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
-### 4. Run the tool
-
-```bash
-python main.py --help
-```
+This installs ImageForge as a system command — you can now run `imageforge` from anywhere.
 
 ---
 
-## Usage (planned)
+## Usage
 
-Once fully implemented, commands will follow this pattern:
+### Resize
 
 ```bash
 # Resize by width, keeping aspect ratio
-python main.py resize photo.jpg --width 800
+imageforge resize photo.jpg --width 800
 
-# Optimize and convert to WebP
-python main.py optimize photo.jpg --quality 80 --format webp
+# Resize by height
+imageforge resize photo.jpg --height 600
 
-# Enhance with automatic settings
-python main.py enhance photo.jpg --auto
+# Resize to exact dimensions
+imageforge resize photo.jpg --width 1920 --height 1080 --no-keep-ratio
 
-# View image metadata
-python main.py info photo.jpg
+# Resize by scale factor (50%)
+imageforge resize photo.jpg --scale 0.5
 
-# Run a pipeline of operations in one pass
-python main.py pipeline photo.jpg --steps '[{"op":"resize","width":1280},{"op":"optimize","quality":85}]'
+# Specify output path
+imageforge resize photo.jpg --width 800 --output thumbnail.jpg
+```
+
+### Optimize
+
+```bash
+# Compress with quality setting
+imageforge optimize photo.jpg --quality 80
+
+# Convert to WebP
+imageforge optimize photo.jpg --target-format webp --quality 85
+
+# Strip metadata and save as progressive JPEG
+imageforge optimize photo.jpg --strip-metadata --progressive
+
+# Specify output path
+imageforge optimize photo.jpg --quality 75 --output photo_compressed.jpg
+```
+
+### Enhance
+
+```bash
+# Auto enhance (smart defaults)
+imageforge enhance photo.jpg --auto
+
+# Manual adjustments
+imageforge enhance photo.jpg --brightness 1.2 --contrast 1.3
+
+# Sharpen and denoise
+imageforge enhance photo.jpg --sharpness 2.0 --denoise
+
+# Convert to grayscale
+imageforge enhance photo.jpg --grayscale
+
+# Specify output path
+imageforge enhance photo.jpg --auto --output photo_enhanced.jpg
+```
+
+### Pipeline
+
+Chain multiple operations in a single pass:
+
+```bash
+imageforge pipeline photo.jpg \
+  --steps '[{"op":"resize","width":1280},{"op":"enhance","auto_enhance":true},{"op":"optimize","quality":80}]' \
+  --output final.jpg
 ```
 
 ---
@@ -105,7 +136,7 @@ python main.py pipeline photo.jpg --steps '[{"op":"resize","width":1280},{"op":"
 
 ```
 imageforge/
-├── main.py                  # CLI entry point
+├── main.py                  # CLI entry point (Click commands)
 ├── editor/
 │   ├── resize.py            # Resize logic
 │   ├── optimize.py          # Compression & format conversion
@@ -115,9 +146,25 @@ imageforge/
 │   ├── file_handler.py      # Path validation, output naming
 │   └── display.py           # Terminal colors and messages
 ├── tests/
+│   ├── test_resize.py
+│   ├── test_optimize.py
+│   └── test_enhance.py
 ├── requirements.txt
+├── setup.py
 └── README.md
 ```
 
 ---
 
+## Running Tests
+
+```bash
+pytest tests/
+```
+
+---
+
+## Author
+
+Built by [Davi Oliveira](https://github.com/davicbtoliveira) as a portfolio project.  
+Feel free to open issues or suggest features.
