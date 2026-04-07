@@ -166,5 +166,4 @@ pytest tests/
 
 ## Author
 
-Built by [Davi Oliveira](https://github.com/davicbtoliveira) as a portfolio project.  
 Feel free to open issues or suggest features.
