@@ -1,10 +1,10 @@
 from PIL import Image
 
 RESAMPLE_FILTERS = {
-    "LANCZOS":  Image.Resampling.LANCZOS,
-    "BICUBIC":  Image.Resampling.BICUBIC,
+    "LANCZOS": Image.Resampling.LANCZOS,
+    "BICUBIC": Image.Resampling.BICUBIC,
     "BILINEAR": Image.Resampling.BILINEAR,
-    "NEAREST":  Image.Resampling.NEAREST,
+    "NEAREST": Image.Resampling.NEAREST,
 }
 
 
@@ -17,7 +17,7 @@ def resize(
     scale: float | None,
     keep_ratio: bool,
     resample: str,
-) -> str:
+) -> dict:
     original_width = img.size[0]
     original_height = img.size[1]
     original_ratio = original_width / original_height
@@ -53,4 +53,7 @@ def resize(
 
     img.save(output_path)
 
-    return output_path
+    return {
+        "output_path": output_path,
+        "dimensions": {"original": (original_width, original_height), "new": img.size},
+    }
