@@ -9,7 +9,7 @@ from utils.display import print_banner, print_success, print_error, print_diff
 
 @click.group()
 def cli():
-    print_banner("1.0.0")
+    print_banner("1.0.1")
 
 
 @cli.command(name="resize")
