@@ -4,7 +4,7 @@ from editor.enhance import enhance
 from editor.optimize import optimize
 from editor.pipeline import run_pipeline
 from utils.file_handler import validate_image, get_output_path
-from utils.display import print_banner, print_success, print_error
+from utils.display import print_banner, print_success, print_error, print_diff
 
 
 @click.group()
@@ -20,21 +20,15 @@ def cli():
 @click.option("--keep-ratio", is_flag=True, default=True)
 @click.option("--resample", default="LANCZOS")
 @click.option("--output", "-o", default=None)
-def resize_cmd(
-        input_path,
-        output,
-        width,
-        height,
-        scale,
-        keep_ratio,
-        resample
-):
+def resize_cmd(input_path, output, width, height, scale, keep_ratio, resample):
     try:
         img = validate_image(input_path)
         out = get_output_path(input_path, output, "_resized")
-        resize(img, input_path, out, width,
-               height, scale, keep_ratio, resample)
+        result = resize(
+            img, input_path, out, width, height, scale, keep_ratio, resample
+        )
         print_success(f"Saved to {out}")
+        print_diff(result)
     except Exception as e:
         print_error(str(e))
 
@@ -47,19 +41,16 @@ def resize_cmd(
 @click.option("--progressive", "-p", is_flag=True, default=False)
 @click.option("--output", "-o", default=None)
 def optimize_cmd(
-        input_path,
-        output,
-        quality,
-        target_format,
-        strip_metadata,
-        progressive
+    input_path, output, quality, target_format, strip_metadata, progressive
 ):
     try:
         img = validate_image(input_path)
         out = get_output_path(input_path, output, "_optimized")
-        optimize(img, input_path, out, quality,
-                 target_format, strip_metadata, progressive)
+        result = optimize(
+            img, input_path, out, quality, target_format, strip_metadata, progressive
+        )
         print_success(f"Saved to {out}")
+        print_diff(result)
     except Exception as e:
         print_error(str(e))
 
@@ -75,23 +66,33 @@ def optimize_cmd(
 @click.option("--grayscale", "-g", is_flag=True, default=False)
 @click.option("--output", "-o", default=None)
 def enhance_cmd(
-        input_path,
-        output,
-        brightness,
-        contrast,
-        sharpness,
-        saturation,
-        auto,
-        denoise,
-        grayscale
+    input_path,
+    output,
+    brightness,
+    contrast,
+    sharpness,
+    saturation,
+    auto,
+    denoise,
+    grayscale,
 ):
     try:
         img = validate_image(input_path)
         out = get_output_path(input_path, output, "_enhanced")
-        enhance(img, input_path, out, brightness, contrast,
-                sharpness, saturation,
-                auto_enhance=auto, denoise=denoise, grayscale=grayscale)
+        result = enhance(
+            img,
+            input_path,
+            out,
+            brightness,
+            contrast,
+            sharpness,
+            saturation,
+            auto_enhance=auto,
+            denoise=denoise,
+            grayscale=grayscale,
+        )
         print_success(f"Saved to {out}")
+        print_diff(result)
     except Exception as e:
         print_error(str(e))
 
@@ -100,16 +101,14 @@ def enhance_cmd(
 @click.argument("input_path")
 @click.option("--steps", "-s", default=None)
 @click.option("--output", "-o", default=None)
-def pipeline_cmd(
-        input_path,
-        output,
-        steps
-):
+def pipeline_cmd(input_path, output, steps):
     try:
         img = validate_image(input_path)
         out = get_output_path(input_path, output, "_final")
-        run_pipeline(img, input_path, out, steps)
+        result = run_pipeline(img, input_path, out, steps)
         print_success(f"Saved to {out}")
+        for step_result in result.get("steps", []):
+            print_diff(step_result)
     except Exception as e:
         print_error(str(e))
 
