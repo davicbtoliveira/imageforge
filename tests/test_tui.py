@@ -101,3 +101,60 @@ def test_tui_enhance_flow_reports_invalid_image_without_crashing(tmp_path):
 
     assert result.exit_code == 0
     assert "File not found" in result.output
+
+
+def test_tui_optimize_flow_saves_output_and_shows_size_and_format(tmp_path):
+    input_path = tmp_path / "input.jpg"
+    output_path = tmp_path / "output.webp"
+    create_input_image(input_path)
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "tui",
+            str(input_path),
+            "--operation",
+            "optimize",
+            "--quality",
+            "80",
+            "--target-format",
+            "WEBP",
+            "--output",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "TUI optimize complete" in result.output
+    assert "Before -> After" in result.output
+    assert "Format: JPEG -> WEBP" in result.output
+    assert "Size:" in result.output
+    assert output_path.exists()
+
+
+def test_tui_pipeline_flow_saves_output_and_shows_step_metadata(tmp_path):
+    input_path = tmp_path / "input.jpg"
+    output_path = tmp_path / "output.jpg"
+    create_input_image(input_path)
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "tui",
+            str(input_path),
+            "--operation",
+            "pipeline",
+            "--steps",
+            '[{"op":"resize","width":600},{"op":"enhance","grayscale":true}]',
+            "--output",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "TUI pipeline complete" in result.output
+    assert "Before -> After" in result.output
+    assert "Dimensions: 1200x800 -> 600x800" in result.output
+    assert "grayscale: False -> True" in result.output
+    assert output_path.exists()
+    assert Image.open(output_path).size == (600, 800)

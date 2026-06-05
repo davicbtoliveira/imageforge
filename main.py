@@ -3,7 +3,13 @@ from editor.resize import resize
 from editor.enhance import enhance
 from editor.optimize import optimize
 from editor.pipeline import run_pipeline
-from editor.tui import render_before_after, run_tui_enhance, run_tui_resize
+from editor.tui import (
+    render_before_after,
+    run_tui_enhance,
+    run_tui_optimize,
+    run_tui_pipeline,
+    run_tui_resize,
+)
 from utils.file_handler import validate_image, get_output_path
 from utils.display import print_banner, print_success, print_error, print_diff
 
@@ -116,7 +122,11 @@ def pipeline_cmd(input_path, output, steps):
 
 @cli.command(name="tui")
 @click.argument("input_path")
-@click.option("--operation", default="resize", type=click.Choice(["resize", "enhance"]))
+@click.option(
+    "--operation",
+    default="resize",
+    type=click.Choice(["resize", "enhance", "optimize", "pipeline"]),
+)
 @click.option("--width", "-W", default=None, type=int)
 @click.option("--height", "-H", default=None, type=int)
 @click.option("--scale", "-s", default=None, type=float)
@@ -129,6 +139,11 @@ def pipeline_cmd(input_path, output, steps):
 @click.option("--auto", "-a", is_flag=True, default=False)
 @click.option("--denoise", "-d", is_flag=True, default=False)
 @click.option("--grayscale", "-g", is_flag=True, default=False)
+@click.option("--quality", "-q", default=85, type=int)
+@click.option("--target-format", "-t", default=None)
+@click.option("--strip-metadata", is_flag=True, default=False)
+@click.option("--progressive", "-p", is_flag=True, default=False)
+@click.option("--steps", default=None)
 @click.option("--output", "-o", default=None)
 def tui_cmd(
     input_path,
@@ -146,6 +161,11 @@ def tui_cmd(
     auto,
     denoise,
     grayscale,
+    quality,
+    target_format,
+    strip_metadata,
+    progressive,
+    steps,
 ):
     try:
         if operation == "resize":
@@ -176,6 +196,24 @@ def tui_cmd(
             print_success("TUI enhance complete")
             click.echo(render_before_after(input_path, result))
             print_diff(result)
+        elif operation == "optimize":
+            result = run_tui_optimize(
+                input_path,
+                output,
+                quality=quality,
+                target_format=target_format,
+                strip_metadata=strip_metadata,
+                progressive=progressive,
+            )
+            print_success("TUI optimize complete")
+            click.echo(render_before_after(input_path, result))
+            print_diff(result)
+        elif operation == "pipeline":
+            result = run_tui_pipeline(input_path, output, steps)
+            print_success("TUI pipeline complete")
+            click.echo(render_before_after(input_path, result))
+            for step_result in result.get("steps", []):
+                print_diff(step_result)
     except Exception as e:
         print_error(str(e))
 
