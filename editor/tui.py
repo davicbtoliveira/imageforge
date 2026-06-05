@@ -26,3 +26,21 @@ def run_tui_resize(
         keep_ratio=keep_ratio,
         resample=resample,
     )
+
+
+def render_before_after(input_path: str, result: dict) -> str:
+    lines = [
+        "Before -> After",
+        f"Before: {input_path}",
+        f"After: {result['output_path']}",
+    ]
+
+    dimensions = result.get("dimensions")
+    if dimensions is not None:
+        original = dimensions["original"]
+        new = dimensions["new"]
+        lines.append(
+            f"Dimensions: {original[0]}x{original[1]} -> {new[0]}x{new[1]}"
+        )
+
+    return "\n".join(lines)

@@ -3,7 +3,7 @@ from editor.resize import resize
 from editor.enhance import enhance
 from editor.optimize import optimize
 from editor.pipeline import run_pipeline
-from editor.tui import run_tui_resize
+from editor.tui import render_before_after, run_tui_resize
 from utils.file_handler import validate_image, get_output_path
 from utils.display import print_banner, print_success, print_error, print_diff
 
@@ -136,6 +136,7 @@ def tui_cmd(input_path, operation, output, width, height, scale, keep_ratio, res
                 resample=resample,
             )
             print_success("TUI resize complete")
+            click.echo(render_before_after(input_path, result))
             print_diff(result)
     except Exception as e:
         print_error(str(e))
