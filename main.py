@@ -3,6 +3,7 @@ from editor.resize import resize
 from editor.enhance import enhance
 from editor.optimize import optimize
 from editor.pipeline import run_pipeline
+from editor.tui import run_tui_resize
 from utils.file_handler import validate_image, get_output_path
 from utils.display import print_banner, print_success, print_error, print_diff
 
@@ -109,6 +110,33 @@ def pipeline_cmd(input_path, output, steps):
         print_success(f"Saved to {out}")
         for step_result in result.get("steps", []):
             print_diff(step_result)
+    except Exception as e:
+        print_error(str(e))
+
+
+@cli.command(name="tui")
+@click.argument("input_path")
+@click.option("--operation", default="resize", type=click.Choice(["resize"]))
+@click.option("--width", "-W", default=None, type=int)
+@click.option("--height", "-H", default=None, type=int)
+@click.option("--scale", "-s", default=None, type=float)
+@click.option("--keep-ratio", is_flag=True, default=True)
+@click.option("--resample", default="LANCZOS")
+@click.option("--output", "-o", default=None)
+def tui_cmd(input_path, operation, output, width, height, scale, keep_ratio, resample):
+    try:
+        if operation == "resize":
+            result = run_tui_resize(
+                input_path,
+                output,
+                width=width,
+                height=height,
+                scale=scale,
+                keep_ratio=keep_ratio,
+                resample=resample,
+            )
+            print_success("TUI resize complete")
+            print_diff(result)
     except Exception as e:
         print_error(str(e))
 
