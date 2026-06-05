@@ -3,7 +3,7 @@ from editor.resize import resize
 from editor.enhance import enhance
 from editor.optimize import optimize
 from editor.pipeline import run_pipeline
-from editor.tui import render_before_after, run_tui_resize
+from editor.tui import render_before_after, run_tui_enhance, run_tui_resize
 from utils.file_handler import validate_image, get_output_path
 from utils.display import print_banner, print_success, print_error, print_diff
 
@@ -116,14 +116,37 @@ def pipeline_cmd(input_path, output, steps):
 
 @cli.command(name="tui")
 @click.argument("input_path")
-@click.option("--operation", default="resize", type=click.Choice(["resize"]))
+@click.option("--operation", default="resize", type=click.Choice(["resize", "enhance"]))
 @click.option("--width", "-W", default=None, type=int)
 @click.option("--height", "-H", default=None, type=int)
 @click.option("--scale", "-s", default=None, type=float)
 @click.option("--keep-ratio", is_flag=True, default=True)
 @click.option("--resample", default="LANCZOS")
+@click.option("--brightness", "-b", default=1.0, type=float)
+@click.option("--contrast", "-c", default=1.0, type=float)
+@click.option("--sharpness", "-S", default=1.0, type=float)
+@click.option("--saturation", default=1.0, type=float)
+@click.option("--auto", "-a", is_flag=True, default=False)
+@click.option("--denoise", "-d", is_flag=True, default=False)
+@click.option("--grayscale", "-g", is_flag=True, default=False)
 @click.option("--output", "-o", default=None)
-def tui_cmd(input_path, operation, output, width, height, scale, keep_ratio, resample):
+def tui_cmd(
+    input_path,
+    operation,
+    output,
+    width,
+    height,
+    scale,
+    keep_ratio,
+    resample,
+    brightness,
+    contrast,
+    sharpness,
+    saturation,
+    auto,
+    denoise,
+    grayscale,
+):
     try:
         if operation == "resize":
             result = run_tui_resize(
@@ -136,6 +159,21 @@ def tui_cmd(input_path, operation, output, width, height, scale, keep_ratio, res
                 resample=resample,
             )
             print_success("TUI resize complete")
+            click.echo(render_before_after(input_path, result))
+            print_diff(result)
+        elif operation == "enhance":
+            result = run_tui_enhance(
+                input_path,
+                output,
+                brightness=brightness,
+                contrast=contrast,
+                sharpness=sharpness,
+                saturation=saturation,
+                auto_enhance=auto,
+                denoise=denoise,
+                grayscale=grayscale,
+            )
+            print_success("TUI enhance complete")
             click.echo(render_before_after(input_path, result))
             print_diff(result)
     except Exception as e:
