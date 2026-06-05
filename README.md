@@ -130,6 +130,45 @@ imageforge pipeline photo.jpg \
   --output final.jpg
 ```
 
+### Terminal UI
+
+Launch the terminal UI workflow with `imageforge tui`. It supports the same resize, enhance, optimize, and pipeline operations, then prints a before -> after comparison with the input path, output path, and available diff metadata.
+
+```bash
+# Resize from the TUI workflow
+imageforge tui photo.jpg --operation resize --width 800 --output thumbnail.jpg
+
+# Enhance and compare before saving
+imageforge tui photo.jpg \
+  --operation enhance \
+  --brightness 1.2 \
+  --contrast 1.3 \
+  --grayscale \
+  --output photo_enhanced.jpg
+
+# Optimize and convert format
+imageforge tui photo.jpg \
+  --operation optimize \
+  --quality 80 \
+  --target-format WEBP \
+  --output photo.webp
+
+# Run a multi-step pipeline
+imageforge tui photo.jpg \
+  --operation pipeline \
+  --steps '[{"op":"resize","width":1280},{"op":"enhance","auto_enhance":true}]' \
+  --output final.jpg
+```
+
+The comparison view always includes a terminal-safe text fallback:
+
+```text
+Before -> After
+Before: photo.jpg
+After: thumbnail.jpg
+Dimensions: 1200x800 -> 800x533
+```
+
 ---
 
 ## Project Structure
@@ -141,7 +180,8 @@ imageforge/
 │   ├── resize.py            # Resize logic
 │   ├── optimize.py          # Compression & format conversion
 │   ├── enhance.py           # Quality enhancements
-│   └── pipeline.py          # Chains multiple operations
+│   ├── pipeline.py          # Chains multiple operations
+│   └── tui.py               # Terminal UI workflow helpers
 ├── utils/
 │   ├── file_handler.py      # Path validation, output naming
 │   └── display.py           # Terminal colors and messages

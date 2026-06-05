@@ -8,6 +8,13 @@ def create_input_image(path):
     Image.new("RGB", (1200, 800), color=(255, 0, 0)).save(path)
 
 
+def test_cli_help_lists_tui_entry_point():
+    result = CliRunner().invoke(cli, ["--help"])
+
+    assert result.exit_code == 0
+    assert "tui" in result.output
+
+
 def test_tui_resize_flow_saves_output_and_reports_success(tmp_path):
     input_path = tmp_path / "input.jpg"
     output_path = tmp_path / "output.jpg"
