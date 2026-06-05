@@ -171,9 +171,3 @@ imageforge/
 ```bash
 pytest tests/
 ```
-
----
-
-## Author
-
-Feel free to open issues or suggest features.
