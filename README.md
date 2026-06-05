@@ -66,6 +66,16 @@ This installs ImageForge as a system command — you can now run `imageforge` fr
 
 ## Usage
 
+### Interactive TUI
+
+Run without arguments to open an interactive terminal workflow:
+
+```bash
+python main.py
+```
+
+The TUI lets you choose resize, optimize, or enhance, then prompts for the image path and operation settings.
+
 ### Resize
 
 ```bash

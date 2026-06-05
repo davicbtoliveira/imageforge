@@ -3,14 +3,19 @@ from editor.resize import resize
 from editor.enhance import enhance
 from editor.optimize import optimize
 from editor.pipeline import run_pipeline
-from editor.tui import run_tui_resize
+from editor.tui import run_interactive_tui, run_tui_resize
 from utils.file_handler import validate_image, get_output_path
 from utils.display import print_banner, print_success, print_error, print_diff
 
 
-@click.group()
-def cli():
+@click.group(invoke_without_command=True, no_args_is_help=False)
+@click.pass_context
+def cli(ctx):
     print_banner("1.0.1")
+    if ctx.invoked_subcommand is None:
+        result = run_interactive_tui()
+        if result is not None:
+            print_diff(result)
 
 
 @cli.command(name="resize")
