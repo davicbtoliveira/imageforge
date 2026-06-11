@@ -8,18 +8,15 @@ RESAMPLE_FILTERS = {
 }
 
 
-def resize(
+def process_resize(
     img: Image.Image,
-    input_path: str,
-    output_path: str,
     width: int | None,
     height: int | None,
     scale: float | None,
     keep_ratio: bool,
     resample: str,
-) -> dict:
-    original_width = img.size[0]
-    original_height = img.size[1]
+) -> tuple[Image.Image, dict]:
+    original_width, original_height = img.size
     original_ratio = original_width / original_height
     size = (width, height)
 
@@ -49,11 +46,24 @@ def resize(
             new_w = original_width
         img = img.resize((new_w, new_h), filter_)
     else:
-        raise ValueError
+        raise ValueError("Must specify width, height, or scale")
 
-    img.save(output_path)
-
-    return {
-        "output_path": output_path,
+    return img, {
         "dimensions": {"original": (original_width, original_height), "new": img.size},
     }
+
+
+def resize(
+    img: Image.Image,
+    input_path: str,
+    output_path: str,
+    width: int | None,
+    height: int | None,
+    scale: float | None,
+    keep_ratio: bool,
+    resample: str,
+) -> dict:
+    img, result = process_resize(img, width, height, scale, keep_ratio, resample)
+    img.save(output_path)
+    result["output_path"] = output_path
+    return result
