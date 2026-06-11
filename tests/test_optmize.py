@@ -1,6 +1,6 @@
 import os
 from PIL import Image
-from editor.optimize import optimize
+from editor.optimize import process_optimize, persist, optimize
 
 
 def create_test_image(tmp_path):
@@ -16,6 +16,26 @@ DEFAULT_OPTIMIZE = dict(
     strip_metadata=False,
     progressive=False
 )
+
+
+def test_process_optimize_strip_metadata(tmp_path):
+    img, input_path = create_test_image(tmp_path)
+    result_img, result = process_optimize(img, input_path, 85, None, True, False)
+    assert "format" in result
+
+
+def test_process_optimize_changes_format(tmp_path):
+    img, input_path = create_test_image(tmp_path)
+    result_img, result = process_optimize(img, input_path, 85, "WEBP", False, False)
+    assert result["format"]["new"] == "WEBP"
+
+
+def test_persist_creates_file(tmp_path):
+    img = Image.new("RGB", (100, 100), color=(0, 0, 0))
+    out = str(tmp_path / "output.jpg")
+    result = persist(img, out, "JPEG", 85, False)
+    assert os.path.getsize(out) > 0
+    assert "size" in result
 
 
 def test_optimize_reduces_size(tmp_path):
