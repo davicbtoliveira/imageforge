@@ -62,4 +62,7 @@ def run_pipeline(
         progressive=save_kwargs.get("progressive", False),
     )
 
-    return {"output_path": output_path, "steps": diffs, "save": save_result}
+    if diffs and "format" in diffs[-1]:
+        diffs[-1]["size"] = save_result["size"]
+
+    return {"output_path": output_path, "steps": diffs}
