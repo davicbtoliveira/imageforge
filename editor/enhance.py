@@ -1,10 +1,8 @@
 from PIL import Image, ImageEnhance, ImageFilter
 
 
-def enhance(
+def process_enhance(
     img: Image.Image,
-    input_path: str,
-    output_path: str,
     brightness: float,
     contrast: float,
     sharpness: float,
@@ -12,9 +10,7 @@ def enhance(
     auto_enhance: bool,
     denoise: bool,
     grayscale: bool,
-) -> dict:
-    defaults = {"brightness": 1.0, "contrast": 1.0, "sharpness": 1.0, "saturation": 1.0}
-
+) -> tuple[Image.Image, dict]:
     if auto_enhance:
         brightness, contrast, sharpness, saturation = 1.2, 1.2, 1.2, 1.2
 
@@ -62,13 +58,30 @@ def enhance(
     if grayscale:
         img = img.convert("L")
 
-    img.save(output_path)
-
-    return {
-        "output_path": output_path,
+    return img, {
         "enhanced": {
             "mode": "auto" if auto_enhance else "manual",
             "applied": applied,
             "changes": changes,
         },
     }
+
+
+def enhance(
+    img: Image.Image,
+    input_path: str,
+    output_path: str,
+    brightness: float,
+    contrast: float,
+    sharpness: float,
+    saturation: float,
+    auto_enhance: bool,
+    denoise: bool,
+    grayscale: bool,
+) -> dict:
+    img, result = process_enhance(
+        img, brightness, contrast, sharpness, saturation, auto_enhance, denoise, grayscale
+    )
+    img.save(output_path)
+    result["output_path"] = output_path
+    return result
