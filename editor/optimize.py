@@ -18,9 +18,7 @@ def process_optimize(
     if output_format == "JPEG" and img.mode == "RGBA":
         img = img.convert("RGB")
     if strip_metadata:
-        clean = Image.new(img.mode, img.size)
-        clean.putdata(list(img.getdata()))
-        img = clean
+            img = Image.frombytes(img.mode, img.size, img.tobytes())
 
     return img, {
         "format": {"original": orig_format, "new": output_format},

@@ -1,5 +1,5 @@
 from PIL import Image
-from editor.resize import resize
+from editor.resize import process_resize, resize
 
 
 def create_test_image():
@@ -10,6 +10,29 @@ def create_test_image():
 DEFAULT_RESIZE = dict(
     width=None, height=None, scale=None, keep_ratio=True, resample="LANCZOS"
 )
+
+
+def test_process_resize_by_width(tmp_path):
+    img, result = process_resize(create_test_image(), 600, None, None, True, "LANCZOS")
+    assert img.size == (600, 400)
+    assert result["dimensions"]["original"] == (1200, 800)
+
+
+def test_process_resize_by_scale(tmp_path):
+    img, result = process_resize(create_test_image(), None, None, 0.5, True, "LANCZOS")
+    assert img.size == (600, 400)
+
+
+def test_process_resize_exact(tmp_path):
+    img, result = process_resize(
+        create_test_image(), 640, 480, None, False, "LANCZOS"
+    )
+    assert img.size == (640, 480)
+
+
+def test_process_resize_thumbnail_fits_box(tmp_path):
+    img, result = process_resize(create_test_image(), 600, 400, None, True, "LANCZOS")
+    assert img.size == (600, 400)
 
 
 def test_resize_by_width(tmp_path):

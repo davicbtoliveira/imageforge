@@ -1,6 +1,6 @@
 import os
 from PIL import Image
-from editor.enhance import enhance
+from editor.enhance import process_enhance, enhance
 
 
 def create_test_image():
@@ -16,6 +16,27 @@ DEFAULT_ENHANCE = dict(
     denoise=False,
     grayscale=False
 )
+
+
+def test_process_enhance_grayscale():
+    img = create_test_image()
+    result_img, result = process_enhance(img, 1.0, 1.0, 1.0, 1.0, False, False, True)
+    assert result_img.mode == "L"
+    assert result["enhanced"]["mode"] == "manual"
+    assert "grayscale" in result["enhanced"]["applied"]
+
+
+def test_process_enhance_auto():
+    img = create_test_image()
+    result_img, result = process_enhance(img, 1.0, 1.0, 1.0, 1.0, True, False, False)
+    assert result["enhanced"]["mode"] == "auto"
+    assert result["enhanced"]["applied"] == ["brightness", "contrast", "sharpness", "saturation"]
+
+
+def test_process_enhance_returns_image_in_memory():
+    img = create_test_image()
+    result_img, result = process_enhance(img, 1.5, 1.0, 1.0, 1.0, False, False, False)
+    assert result_img is not img
 
 
 def test_enhance_auto(tmp_path):
