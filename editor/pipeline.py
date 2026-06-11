@@ -1,51 +1,47 @@
 import json
-from PIL import Image
-from editor.resize import resize
-from editor.enhance import enhance
-from editor.optimize import optimize
+from editor.resize import process_resize
+from editor.enhance import process_enhance
+from editor.optimize import process_optimize, persist
 
 
 def run_pipeline(
-    img: Image.Image,
+    img,
     input_path: str,
     output_path: str,
     steps_json: str,
 ) -> dict:
     steps = json.loads(steps_json)
     diffs = []
+    save_kwargs = {}
 
     for step in steps:
         op = step.get("op")
         if op == "resize":
-            result = resize(
+            img, result = process_resize(
                 img,
-                input_path,
-                output_path,
                 width=step.get("width"),
                 height=step.get("height"),
                 scale=step.get("scale"),
-                keep_ratio=step.get("keep_ratio", False),
+                keep_ratio=step.get("keep_ratio", True),
                 resample=step.get("resample", "LANCZOS"),
             )
             diffs.append(result)
-            img = Image.open(output_path)
         elif op == "optimize":
-            result = optimize(
+            img, result = process_optimize(
                 img,
                 input_path,
-                output_path,
                 quality=step.get("quality", 80),
-                target_format=(step.get("target_format")),
+                target_format=step.get("target_format"),
                 strip_metadata=step.get("strip_metadata", False),
                 progressive=step.get("progressive", False),
             )
+            save_kwargs["format"] = result["format"]["new"]
+            save_kwargs["quality"] = step.get("quality", 80)
+            save_kwargs["progressive"] = step.get("progressive", False)
             diffs.append(result)
-            img = Image.open(output_path)
         elif op == "enhance":
-            result = enhance(
+            img, result = process_enhance(
                 img,
-                input_path,
-                output_path,
                 brightness=step.get("brightness", 1.0),
                 contrast=step.get("contrast", 1.0),
                 sharpness=step.get("sharpness", 1.0),
@@ -55,8 +51,15 @@ def run_pipeline(
                 grayscale=step.get("grayscale", False),
             )
             diffs.append(result)
-            img = Image.open(output_path)
         else:
             raise ValueError(f"Unknown Operation: {op}")
 
-    return {"output_path": output_path, "steps": diffs}
+    save_result = persist(
+        img,
+        output_path,
+        output_format=save_kwargs.get("format"),
+        quality=save_kwargs.get("quality", 80),
+        progressive=save_kwargs.get("progressive", False),
+    )
+
+    return {"output_path": output_path, "steps": diffs, "save": save_result}
