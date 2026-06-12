@@ -1,4 +1,5 @@
 import click
+from editor.result import OperationResult
 
 
 def print_error(message: str) -> None:
@@ -25,22 +26,23 @@ def print_info(message: str) -> None:
     click.echo(click.style(f"  ℹ Info: ${message}", fg="yellow"))
 
 
-def print_diff(data: dict) -> None:
-    if not data:
+def print_diff(data: OperationResult) -> None:
+    ch = data.changes
+    if not ch:
         return
 
-    if "dimensions" in data:
-        orig = data["dimensions"]["original"]
-        new = data["dimensions"]["new"]
+    if "dimensions" in ch:
+        orig = ch["dimensions"]["original"]
+        new = ch["dimensions"]["new"]
         click.echo(
             click.style(
                 f"     • Dimensions: {orig[0]}x{orig[1]} → {new[0]}x{new[1]}", fg="cyan"
             )
         )
 
-    if "size" in data:
-        orig = data["size"]["original"]
-        new = data["size"]["new"]
+    if "size" in ch:
+        orig = ch["size"]["original"]
+        new = ch["size"]["new"]
         if new < orig:
             pct = int((1 - new / orig) * 100)
             click.echo(
@@ -57,22 +59,22 @@ def print_diff(data: dict) -> None:
                 )
             )
 
-    if "format" in data:
-        orig_fmt = data["format"]["original"]
-        new_fmt = data["format"]["new"]
+    if "format" in ch:
+        orig_fmt = ch["format"]["original"]
+        new_fmt = ch["format"]["new"]
         if orig_fmt != new_fmt:
             click.echo(click.style(f"     • Format: {orig_fmt} → {new_fmt}", fg="cyan"))
 
-    if "enhanced" in data:
-        mode = data["enhanced"]["mode"]
-        applied = data["enhanced"]["applied"]
+    if "enhanced" in ch:
+        mode = ch["enhanced"]["mode"]
+        applied = ch["enhanced"]["applied"]
         if mode == "auto":
             click.echo(
                 click.style(f"     • Enhanced: {', '.join(applied)} (auto)", fg="cyan")
             )
         else:
             changes = []
-            for key, vals in data["enhanced"]["changes"].items():
+            for key, vals in ch["enhanced"]["changes"].items():
                 changes.append(f"{key}: {vals[0]}→{vals[1]}")
             click.echo(click.style(f"     • {', '.join(changes)}", fg="cyan"))
 
