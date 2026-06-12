@@ -1,6 +1,7 @@
 from PIL import Image
 import click
 
+from editor.result import OperationResult
 from editor.enhance import enhance
 from editor.optimize import optimize
 from editor.resize import resize
@@ -15,7 +16,7 @@ def run_tui_resize(
     scale: float | None,
     keep_ratio: bool,
     resample: str,
-) -> dict:
+) -> OperationResult:
     img: Image.Image = validate_image(input_path)
     out = get_output_path(input_path, output_path, "_tui_resized")
 

@@ -113,7 +113,7 @@ def pipeline_cmd(input_path, output, steps):
         out = get_output_path(input_path, output, "_final")
         result = run_pipeline(img, input_path, out, steps)
         print_success(f"Saved to {out}")
-        for step_result in result.get("steps", []):
+        for step_result in result.steps:
             print_diff(step_result)
     except Exception as e:
         print_error(str(e))
