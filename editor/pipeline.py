@@ -1,4 +1,5 @@
 import json
+from editor.result import OperationResult, PipelineResult
 from editor.resize import process_resize
 from editor.enhance import process_enhance
 from editor.optimize import process_optimize, persist
@@ -9,9 +10,9 @@ def run_pipeline(
     input_path: str,
     output_path: str,
     steps_json: str,
-) -> dict:
+) -> PipelineResult:
     steps = json.loads(steps_json)
-    diffs = []
+    diffs: list[OperationResult] = []
     save_kwargs = {}
 
     for step in steps:
@@ -25,7 +26,11 @@ def run_pipeline(
                 keep_ratio=step.get("keep_ratio", True),
                 resample=step.get("resample", "LANCZOS"),
             )
-            diffs.append(result)
+            diffs.append(OperationResult(
+                output_path=output_path,
+                input_path=input_path,
+                changes=result,
+            ))
         elif op == "optimize":
             img, result = process_optimize(
                 img,
@@ -38,7 +43,11 @@ def run_pipeline(
             save_kwargs["format"] = result["format"]["new"]
             save_kwargs["quality"] = step.get("quality", 80)
             save_kwargs["progressive"] = step.get("progressive", False)
-            diffs.append(result)
+            diffs.append(OperationResult(
+                output_path=output_path,
+                input_path=input_path,
+                changes=result,
+            ))
         elif op == "enhance":
             img, result = process_enhance(
                 img,
@@ -50,7 +59,11 @@ def run_pipeline(
                 denoise=step.get("denoise", False),
                 grayscale=step.get("grayscale", False),
             )
-            diffs.append(result)
+            diffs.append(OperationResult(
+                output_path=output_path,
+                input_path=input_path,
+                changes=result,
+            ))
         else:
             raise ValueError(f"Unknown Operation: {op}")
 
@@ -62,7 +75,7 @@ def run_pipeline(
         progressive=save_kwargs.get("progressive", False),
     )
 
-    if diffs and "format" in diffs[-1]:
-        diffs[-1]["size"] = save_result["size"]
+    if diffs and "format" in diffs[-1].changes:
+        diffs[-1].changes["size"] = save_result.changes["size"]
 
-    return {"output_path": output_path, "steps": diffs}
+    return PipelineResult(output_path=output_path, steps=diffs)
