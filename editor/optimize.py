@@ -1,6 +1,7 @@
 import os
 from PIL import Image
 from pathlib import Path
+from editor.result import OperationResult
 
 
 def process_optimize(
@@ -31,7 +32,7 @@ def persist(
     output_format: str | None,
     quality: int,
     progressive: bool,
-) -> dict:
+) -> OperationResult:
     try:
         img.save(
             output_path,
@@ -42,10 +43,11 @@ def persist(
     except Exception as e:
         raise RuntimeError(f"Failed to save image {e}")
 
-    return {
-        "output_path": output_path,
-        "size": {"new": os.path.getsize(output_path)},
-    }
+    return OperationResult(
+        output_path=output_path,
+        input_path=output_path,
+        changes={"size": {"new": os.path.getsize(output_path)}},
+    )
 
 
 def optimize(
@@ -56,7 +58,7 @@ def optimize(
     target_format: str | None,
     strip_metadata: bool,
     progressive: bool,
-) -> dict:
+) -> OperationResult:
     original_size = os.path.getsize(input_path)
 
     img, result = process_optimize(
@@ -65,6 +67,9 @@ def optimize(
 
     output_format = result["format"]["new"]
     save_result = persist(img, output_path, output_format, quality, progressive)
-    result["output_path"] = output_path
-    result["size"] = {"original": original_size, "new": save_result["size"]["new"]}
-    return result
+    result["size"] = {"original": original_size, "new": save_result.changes["size"]["new"]}
+    return OperationResult(
+        output_path=output_path,
+        input_path=input_path,
+        changes=result,
+    )

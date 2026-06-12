@@ -1,4 +1,5 @@
 from PIL import Image
+from editor.result import OperationResult
 
 RESAMPLE_FILTERS = {
     "LANCZOS": Image.Resampling.LANCZOS,
@@ -62,8 +63,11 @@ def resize(
     scale: float | None,
     keep_ratio: bool,
     resample: str,
-) -> dict:
+) -> OperationResult:
     img, result = process_resize(img, width, height, scale, keep_ratio, resample)
     img.save(output_path)
-    result["output_path"] = output_path
-    return result
+    return OperationResult(
+        output_path=output_path,
+        input_path=input_path,
+        changes=result,
+    )

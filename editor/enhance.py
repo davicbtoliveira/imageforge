@@ -1,4 +1,5 @@
 from PIL import Image, ImageEnhance, ImageFilter
+from editor.result import OperationResult
 
 
 def process_enhance(
@@ -78,10 +79,13 @@ def enhance(
     auto_enhance: bool,
     denoise: bool,
     grayscale: bool,
-) -> dict:
+) -> OperationResult:
     img, result = process_enhance(
         img, brightness, contrast, sharpness, saturation, auto_enhance, denoise, grayscale
     )
     img.save(output_path)
-    result["output_path"] = output_path
-    return result
+    return OperationResult(
+        output_path=output_path,
+        input_path=input_path,
+        changes=result,
+    )
