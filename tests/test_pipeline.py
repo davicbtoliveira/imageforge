@@ -1,4 +1,5 @@
 from PIL import Image
+from editor.result import PipelineResult
 from editor.pipeline import run_pipeline
 
 
@@ -14,7 +15,8 @@ def test_pipeline_resize_only(tmp_path):
     out = str(tmp_path / "output.jpg")
     steps = '[{"op":"resize","width":600}]'
     result = run_pipeline(img, input_path, out, steps)
-    assert len(result["steps"]) == 1
+    assert isinstance(result, PipelineResult)
+    assert len(result.steps) == 1
     assert Image.open(out).size == (600, 400)
 
 
@@ -25,7 +27,8 @@ def test_pipeline_resize_enhance(tmp_path):
         '[{"op":"resize","width":600},{"op":"enhance","grayscale":true}]'
     )
     result = run_pipeline(img, input_path, out, steps)
-    assert len(result["steps"]) == 2
+    assert isinstance(result, PipelineResult)
+    assert len(result.steps) == 2
     assert Image.open(out).mode == "L"
 
 
@@ -38,11 +41,12 @@ def test_pipeline_all_three(tmp_path):
         '{"op":"optimize","quality":80,"target_format":"WEBP"}]'
     )
     result = run_pipeline(img, input_path, out, steps)
-    assert len(result["steps"]) == 3
+    assert isinstance(result, PipelineResult)
+    assert len(result.steps) == 3
     out_img = Image.open(out)
     assert out_img.size == (600, 400)
     assert str(out).endswith(".webp")
-    assert "size" in result["steps"][-1]
+    assert "size" in result.steps[-1].changes
 
 
 def test_pipeline_unknown_op(tmp_path):

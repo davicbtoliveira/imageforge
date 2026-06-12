@@ -1,5 +1,6 @@
 import os
 from PIL import Image
+from editor.result import OperationResult
 from editor.optimize import process_optimize, persist, optimize
 
 
@@ -34,22 +35,25 @@ def test_persist_creates_file(tmp_path):
     img = Image.new("RGB", (100, 100), color=(0, 0, 0))
     out = str(tmp_path / "output.jpg")
     result = persist(img, out, "JPEG", 85, False)
+    assert isinstance(result, OperationResult)
     assert os.path.getsize(out) > 0
-    assert "size" in result
+    assert "size" in result.changes
 
 
 def test_optimize_reduces_size(tmp_path):
     img, input_path = create_test_image(tmp_path)
     out = str(tmp_path / "output.jpg")
-    optimize(img, input_path, out, **DEFAULT_OPTIMIZE)
+    result = optimize(img, input_path, out, **DEFAULT_OPTIMIZE)
+    assert isinstance(result, OperationResult)
     assert os.path.getsize(out) > 0
 
 
 def test_optimize_convert_to_webp(tmp_path):
     img, input_path = create_test_image(tmp_path)
     out = str(tmp_path / "output.webp")
-    optimize(img, input_path, out, **
+    result = optimize(img, input_path, out, **
              {**DEFAULT_OPTIMIZE, "target_format": "WEBP"})
+    assert isinstance(result, OperationResult)
     assert os.path.basename(out).endswith(".webp")
 
 
@@ -57,6 +61,8 @@ def test_optimize_quality(tmp_path):
     img, input_path = create_test_image(tmp_path)
     out_high = str(tmp_path / "high.jpg")
     out_low = str(tmp_path / "low.jpg")
-    optimize(img, input_path, out_high, **{**DEFAULT_OPTIMIZE, "quality": 95})
-    optimize(img, input_path, out_low,  **{**DEFAULT_OPTIMIZE, "quality": 10})
+    r1 = optimize(img, input_path, out_high, **{**DEFAULT_OPTIMIZE, "quality": 95})
+    r2 = optimize(img, input_path, out_low,  **{**DEFAULT_OPTIMIZE, "quality": 10})
+    assert isinstance(r1, OperationResult)
+    assert isinstance(r2, OperationResult)
     assert os.path.getsize(out_high) > os.path.getsize(out_low)

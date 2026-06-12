@@ -1,5 +1,6 @@
 import os
 from PIL import Image
+from editor.result import OperationResult
 from editor.enhance import process_enhance, enhance
 
 
@@ -41,20 +42,24 @@ def test_process_enhance_returns_image_in_memory():
 
 def test_enhance_auto(tmp_path):
     out = str(tmp_path / "output.jpg")
-    enhance(create_test_image(), "", out, **
+    result = enhance(create_test_image(), "", out, **
             {**DEFAULT_ENHANCE, "auto_enhance": True})
+    assert isinstance(result, OperationResult)
+    assert result.output_path == out
     assert os.path.exists(out)
 
 
 def test_enhance_grayscale(tmp_path):
     out = str(tmp_path / "output.jpg")
-    enhance(create_test_image(), "", out, **
+    result = enhance(create_test_image(), "", out, **
             {**DEFAULT_ENHANCE, "grayscale": True})
+    assert isinstance(result, OperationResult)
     assert Image.open(out).mode == "L"
 
 
 def test_enhance_brightness(tmp_path):
     out = str(tmp_path / "output.jpg")
-    enhance(create_test_image(), "", out, **
+    result = enhance(create_test_image(), "", out, **
             {**DEFAULT_ENHANCE, "brightness": 1.5})
-    os.path.exists(out)
+    assert isinstance(result, OperationResult)
+    assert os.path.exists(out)
