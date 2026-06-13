@@ -1,5 +1,5 @@
 from PIL import Image
-from editor.result import PipelineResult
+from shared.result import PipelineResult
 from editor.pipeline import run_pipeline
 
 

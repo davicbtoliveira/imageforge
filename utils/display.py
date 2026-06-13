@@ -1,5 +1,5 @@
 import click
-from editor.result import OperationResult
+from shared.result import OperationResult
 
 
 def print_error(message: str) -> None:
