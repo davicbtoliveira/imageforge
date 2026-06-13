@@ -1,10 +1,9 @@
 from PIL import Image
 import click
 
-from editor.result import OperationResult
-from editor.enhance import enhance
-from editor.optimize import optimize
-from editor.resize import resize
+from shared.result import OperationResult
+from editor._defaults import QUALITY, SUFFIXES
+from editor.pipeline import run_single_op
 from utils.file_handler import get_output_path, validate_image
 
 
@@ -18,17 +17,12 @@ def run_tui_resize(
     resample: str,
 ) -> OperationResult:
     img: Image.Image = validate_image(input_path)
-    out = get_output_path(input_path, output_path, "_tui_resized")
+    out = get_output_path(input_path, output_path, SUFFIXES["tui_resize"])
 
-    return resize(
-        img,
-        input_path,
-        out,
-        width=width,
-        height=height,
-        scale=scale,
-        keep_ratio=keep_ratio,
-        resample=resample,
+    return run_single_op(
+        img, input_path, out, "resize",
+        width=width, height=height, scale=scale,
+        keep_ratio=keep_ratio, resample=resample,
     )
 
 
@@ -100,8 +94,8 @@ def _interactive_resize(input_path: str, output_path: str | None) -> dict:
 
 def _interactive_optimize(input_path: str, output_path: str | None) -> dict:
     img = validate_image(input_path)
-    out = get_output_path(input_path, output_path, "_tui_optimized")
-    quality = click.prompt("Quality", type=int, default=85)
+    out = get_output_path(input_path, output_path, SUFFIXES["tui_optimize"])
+    quality = click.prompt("Quality", type=int, default=QUALITY)
     target_format = _blank_to_none(
         click.prompt("Target format", default="", show_default=False)
     )
@@ -110,20 +104,16 @@ def _interactive_optimize(input_path: str, output_path: str | None) -> dict:
     strip_metadata = click.confirm("Strip metadata", default=False)
     progressive = click.confirm("Progressive", default=False)
 
-    return optimize(
-        img,
-        input_path,
-        out,
-        quality=quality,
-        target_format=target_format,
-        strip_metadata=strip_metadata,
-        progressive=progressive,
+    return run_single_op(
+        img, input_path, out, "optimize",
+        quality=quality, target_format=target_format,
+        strip_metadata=strip_metadata, progressive=progressive,
     )
 
 
 def _interactive_enhance(input_path: str, output_path: str | None) -> dict:
     img = validate_image(input_path)
-    out = get_output_path(input_path, output_path, "_tui_enhanced")
+    out = get_output_path(input_path, output_path, SUFFIXES["tui_enhance"])
     auto_enhance = click.confirm("Auto enhance", default=True)
 
     brightness = contrast = sharpness = saturation = 1.0
@@ -136,17 +126,11 @@ def _interactive_enhance(input_path: str, output_path: str | None) -> dict:
     denoise = click.confirm("Denoise", default=False)
     grayscale = click.confirm("Grayscale", default=False)
 
-    return enhance(
-        img,
-        input_path,
-        out,
-        brightness=brightness,
-        contrast=contrast,
-        sharpness=sharpness,
-        saturation=saturation,
-        auto_enhance=auto_enhance,
-        denoise=denoise,
-        grayscale=grayscale,
+    return run_single_op(
+        img, input_path, out, "enhance",
+        brightness=brightness, contrast=contrast,
+        sharpness=sharpness, saturation=saturation,
+        auto_enhance=auto_enhance, denoise=denoise, grayscale=grayscale,
     )
 
 

@@ -1,5 +1,4 @@
 from PIL import Image, ImageEnhance, ImageFilter
-from editor.result import OperationResult
 
 
 def process_enhance(
@@ -23,40 +22,27 @@ def process_enhance(
     applied = []
     changes = {}
 
-    if brightness != 1.0:
+    if auto_enhance or brightness != 1.0:
         applied.append("brightness")
         changes["brightness"] = (1.0, brightness)
-    if contrast != 1.0:
+    if auto_enhance or contrast != 1.0:
         applied.append("contrast")
         changes["contrast"] = (1.0, contrast)
-    if sharpness != 1.0:
+    if auto_enhance or sharpness != 1.0:
         applied.append("sharpness")
         changes["sharpness"] = (1.0, sharpness)
-    if saturation != 1.0:
+    if auto_enhance or saturation != 1.0:
         applied.append("saturation")
         changes["saturation"] = (1.0, saturation)
 
     if denoise:
         applied.append("denoise")
         changes["denoise"] = (False, True)
+        img = img.filter(ImageFilter.MedianFilter(size=3))
 
     if grayscale:
         applied.append("grayscale")
         changes["grayscale"] = (False, True)
-
-    if auto_enhance:
-        applied = ["brightness", "contrast", "sharpness", "saturation"]
-        changes = {
-            "brightness": (1.0, 1.2),
-            "contrast": (1.0, 1.2),
-            "sharpness": (1.0, 1.2),
-            "saturation": (1.0, 1.2),
-        }
-
-    if denoise:
-        img = img.filter(ImageFilter.MedianFilter(size=3))
-
-    if grayscale:
         img = img.convert("L")
 
     return img, {
@@ -66,26 +52,3 @@ def process_enhance(
             "changes": changes,
         },
     }
-
-
-def enhance(
-    img: Image.Image,
-    input_path: str,
-    output_path: str,
-    brightness: float,
-    contrast: float,
-    sharpness: float,
-    saturation: float,
-    auto_enhance: bool,
-    denoise: bool,
-    grayscale: bool,
-) -> OperationResult:
-    img, result = process_enhance(
-        img, brightness, contrast, sharpness, saturation, auto_enhance, denoise, grayscale
-    )
-    img.save(output_path)
-    return OperationResult(
-        output_path=output_path,
-        input_path=input_path,
-        changes=result,
-    )

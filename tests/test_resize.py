@@ -1,6 +1,7 @@
 from PIL import Image
-from editor.result import OperationResult
-from editor.resize import process_resize, resize
+from shared.result import OperationResult
+from editor.pipeline import run_single_op
+from editor.resize import process_resize
 
 
 def create_test_image():
@@ -38,7 +39,7 @@ def test_process_resize_thumbnail_fits_box(tmp_path):
 
 def test_resize_by_width(tmp_path):
     out = str(tmp_path / "output.jpg")
-    result = resize(create_test_image(), "", out, **{**DEFAULT_RESIZE, "width": 600})
+    result = run_single_op(create_test_image(), "", out, "resize", **{**DEFAULT_RESIZE, "width": 600})
     assert isinstance(result, OperationResult)
     assert result.output_path == out
     img = Image.open(result.output_path)
@@ -47,7 +48,7 @@ def test_resize_by_width(tmp_path):
 
 def test_resize_by_scale(tmp_path):
     out = str(tmp_path / "output.jpg")
-    result = resize(create_test_image(), "", out, **{**DEFAULT_RESIZE, "scale": 0.5})
+    result = run_single_op(create_test_image(), "", out, "resize", **{**DEFAULT_RESIZE, "scale": 0.5})
     assert isinstance(result, OperationResult)
     img = Image.open(result.output_path)
     assert img.size == (600, 400)
@@ -55,10 +56,8 @@ def test_resize_by_scale(tmp_path):
 
 def test_resize_exact_dimensions(tmp_path):
     out = str(tmp_path / "output.jpg")
-    result = resize(
-        create_test_image(),
-        "",
-        out,
+    result = run_single_op(
+        create_test_image(), "", out, "resize",
         **{**DEFAULT_RESIZE, "width": 640, "height": 480, "keep_ratio": False},
     )
     assert isinstance(result, OperationResult)
