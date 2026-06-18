@@ -1,82 +1,81 @@
-import os
 import json
+import os
+from typing import Any
+
 from PIL import Image
+
+from editor._defaults import KEEP_RATIO, PROGRESSIVE, QUALITY, RESAMPLE, STRIP_METADATA
+from editor.operations import (
+    EnhanceOperation,
+    Operation,
+    OptimizeOperation,
+    ResizeOperation,
+)
+from editor.writer import FileSystemWriter, ImageWriter
 from shared.result import OperationResult, PipelineResult
-from editor._defaults import QUALITY, RESAMPLE, KEEP_RATIO, PROGRESSIVE, STRIP_METADATA
-from editor.resize import process_resize
-from editor.enhance import process_enhance
-from editor.optimize import process_optimize, persist
+
+
+def _step_to_operation(step: dict[str, Any]) -> Operation:
+    op = step.get("op")
+    if op == "resize":
+        return ResizeOperation(
+            width=step.get("width"),
+            height=step.get("height"),
+            scale=step.get("scale"),
+            keep_ratio=step.get("keep_ratio", KEEP_RATIO),
+            resample=step.get("resample", RESAMPLE),
+        )
+    if op == "optimize":
+        return OptimizeOperation(
+            quality=step.get("quality", QUALITY),
+            target_format=step.get("target_format"),
+            strip_metadata=step.get("strip_metadata", STRIP_METADATA),
+            progressive=step.get("progressive", PROGRESSIVE),
+        )
+    if op == "enhance":
+        return EnhanceOperation(
+            brightness=step.get("brightness", 1.0),
+            contrast=step.get("contrast", 1.0),
+            sharpness=step.get("sharpness", 1.0),
+            saturation=step.get("saturation", 1.0),
+            auto_enhance=step.get("auto_enhance", False),
+            denoise=step.get("denoise", False),
+            grayscale=step.get("grayscale", False),
+        )
+    raise ValueError(f"Unknown Operation: {op}")
 
 
 def run_pipeline(
-    img,
+    img: Image.Image,
     input_path: str,
     output_path: str,
     steps_json: str,
+    writer: ImageWriter | None = None,
 ) -> PipelineResult:
-    steps = json.loads(steps_json)
+    writer = writer or FileSystemWriter()
+    steps_data = json.loads(steps_json)
     diffs: list[OperationResult] = []
-    save_kwargs = {}
+    operations = [_step_to_operation(s) for s in steps_data]
+    accumulated_save_options: dict[str, Any] = {}
 
-    for step in steps:
-        op = step.get("op")
-        if op == "resize":
-            img, result = process_resize(
-                img,
-                width=step.get("width"),
-                height=step.get("height"),
-                scale=step.get("scale"),
-                keep_ratio=step.get("keep_ratio", KEEP_RATIO),
-                resample=step.get("resample", RESAMPLE),
-            )
-            diffs.append(OperationResult(
-                output_path=output_path,
-                input_path=input_path,
-                changes=result,
-            ))
-        elif op == "optimize":
-            img, result = process_optimize(
-                img,
-                input_path,
-                target_format=step.get("target_format"),
-                strip_metadata=step.get("strip_metadata", STRIP_METADATA),
-            )
-            save_kwargs["format"] = result["format"]["new"]
-            save_kwargs["quality"] = step.get("quality", QUALITY)
-            save_kwargs["progressive"] = step.get("progressive", PROGRESSIVE)
-            diffs.append(OperationResult(
-                output_path=output_path,
-                input_path=input_path,
-                changes=result,
-            ))
-        elif op == "enhance":
-            img, result = process_enhance(
-                img,
-                brightness=step.get("brightness", 1.0),
-                contrast=step.get("contrast", 1.0),
-                sharpness=step.get("sharpness", 1.0),
-                saturation=step.get("saturation", 1.0),
-                auto_enhance=step.get("auto_enhance", False),
-                denoise=step.get("denoise", False),
-                grayscale=step.get("grayscale", False),
-            )
-            diffs.append(OperationResult(
-                output_path=output_path,
-                input_path=input_path,
-                changes=result,
-            ))
-        else:
-            raise ValueError(f"Unknown Operation: {op}")
+    for op in operations:
+        img, changes = op.apply(img)
+        accumulated_save_options.update(changes.get("save_options", {}))
+        diffs.append(OperationResult(
+            output_path=output_path,
+            input_path=input_path,
+            changes=changes,
+        ))
 
-    save_result = persist(
+    save_result = writer.save(
         img,
         output_path,
-        output_format=save_kwargs.get("format"),
-        quality=save_kwargs.get("quality", QUALITY),
-        progressive=save_kwargs.get("progressive", PROGRESSIVE),
+        fmt=accumulated_save_options.get("format"),
+        quality=accumulated_save_options.get("quality", QUALITY),
+        progressive=accumulated_save_options.get("progressive", PROGRESSIVE),
     )
 
-    if diffs and "format" in diffs[-1].changes:
+    if diffs and "size" in save_result.changes:
         diffs[-1].changes["size"] = save_result.changes["size"]
 
     return PipelineResult(output_path=output_path, steps=diffs)
@@ -86,48 +85,25 @@ def run_single_op(
     img: Image.Image,
     input_path: str,
     output_path: str,
-    op: str,
-    **kwargs,
+    operation: Operation,
+    writer: ImageWriter | None = None,
 ) -> OperationResult:
-    if op == "resize":
-        img, changes = process_resize(
-            img,
-            width=kwargs.get("width"),
-            height=kwargs.get("height"),
-            scale=kwargs.get("scale"),
-            keep_ratio=kwargs.get("keep_ratio", KEEP_RATIO),
-            resample=kwargs.get("resample", RESAMPLE),
-        )
-        persist(img, output_path, None, QUALITY, PROGRESSIVE)
-    elif op == "enhance":
-        img, changes = process_enhance(
-            img,
-            brightness=kwargs.get("brightness", 1.0),
-            contrast=kwargs.get("contrast", 1.0),
-            sharpness=kwargs.get("sharpness", 1.0),
-            saturation=kwargs.get("saturation", 1.0),
-            auto_enhance=kwargs.get("auto_enhance", False),
-            denoise=kwargs.get("denoise", False),
-            grayscale=kwargs.get("grayscale", False),
-        )
-        persist(img, output_path, None, QUALITY, PROGRESSIVE)
-    elif op == "optimize":
+    writer = writer or FileSystemWriter()
+
+    img, changes = operation.apply(img)
+    save_options = changes.get("save_options", {})
+    save_result = writer.save(
+        img,
+        output_path,
+        fmt=save_options.get("format"),
+        quality=save_options.get("quality", QUALITY),
+        progressive=save_options.get("progressive", PROGRESSIVE),
+    )
+
+    if input_path and os.path.exists(input_path):
         original_size = os.path.getsize(input_path)
-        img, changes = process_optimize(
-            img,
-            input_path,
-            target_format=kwargs.get("target_format"),
-            strip_metadata=kwargs.get("strip_metadata", STRIP_METADATA),
-        )
-        output_format = changes["format"]["new"]
-        quality = kwargs.get("quality", QUALITY)
-        progressive = kwargs.get("progressive", PROGRESSIVE)
-        save_result = persist(img, output_path, output_format, quality, progressive)
-        changes["size"] = {
-            "original": original_size,
-            "new": save_result.changes["size"]["new"],
-        }
-    else:
-        raise ValueError(f"Unknown operation: {op}")
+        new_size = save_result.changes.get("size", {}).get("new")
+        if new_size is not None:
+            changes["size"] = {"original": original_size, "new": new_size}
 
     return OperationResult(output_path=output_path, input_path=input_path, changes=changes)

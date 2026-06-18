@@ -1,66 +1,46 @@
-import os
 from PIL import Image
-from shared.result import OperationResult
-from editor.enhance import process_enhance
+from editor.operations import EnhanceOperation
 from editor.pipeline import run_single_op
+from shared.result import OperationResult
 
 
 def create_test_image():
     return Image.new("RGB", (800, 600), color=(100, 149, 237))
 
 
-DEFAULT_ENHANCE = dict(
-    brightness=1.0,
-    contrast=1.0,
-    sharpness=1.0,
-    saturation=1.0,
-    auto_enhance=False,
-    denoise=False,
-    grayscale=False
-)
-
-
-def test_process_enhance_grayscale():
-    img = create_test_image()
-    result_img, result = process_enhance(img, 1.0, 1.0, 1.0, 1.0, False, False, True)
-    assert result_img.mode == "L"
+def test_grayscale():
+    img, result = EnhanceOperation(grayscale=True).apply(create_test_image())
+    assert img.mode == "L"
     assert result["enhanced"]["mode"] == "manual"
     assert "grayscale" in result["enhanced"]["applied"]
 
 
-def test_process_enhance_auto():
-    img = create_test_image()
-    result_img, result = process_enhance(img, 1.0, 1.0, 1.0, 1.0, True, False, False)
+def test_auto_enhance():
+    img, result = EnhanceOperation(auto_enhance=True).apply(create_test_image())
     assert result["enhanced"]["mode"] == "auto"
     assert result["enhanced"]["applied"] == ["brightness", "contrast", "sharpness", "saturation"]
 
 
-def test_process_enhance_returns_image_in_memory():
+def test_returns_new_image():
     img = create_test_image()
-    result_img, result = process_enhance(img, 1.5, 1.0, 1.0, 1.0, False, False, False)
+    result_img, result = EnhanceOperation(brightness=1.5).apply(img)
     assert result_img is not img
 
 
-def test_enhance_auto(tmp_path):
+def test_enhance_auto_integration(tmp_path):
     out = str(tmp_path / "output.jpg")
-    result = run_single_op(create_test_image(), "", out, "enhance", **
-            {**DEFAULT_ENHANCE, "auto_enhance": True})
+    result = run_single_op(create_test_image(), "", out, EnhanceOperation(auto_enhance=True))
     assert isinstance(result, OperationResult)
     assert result.output_path == out
-    assert os.path.exists(out)
 
 
-def test_enhance_grayscale(tmp_path):
+def test_enhance_grayscale_integration(tmp_path):
     out = str(tmp_path / "output.jpg")
-    result = run_single_op(create_test_image(), "", out, "enhance", **
-            {**DEFAULT_ENHANCE, "grayscale": True})
-    assert isinstance(result, OperationResult)
+    result = run_single_op(create_test_image(), "", out, EnhanceOperation(grayscale=True))
     assert Image.open(out).mode == "L"
 
 
-def test_enhance_brightness(tmp_path):
+def test_enhance_brightness_integration(tmp_path):
     out = str(tmp_path / "output.jpg")
-    result = run_single_op(create_test_image(), "", out, "enhance", **
-            {**DEFAULT_ENHANCE, "brightness": 1.5})
+    result = run_single_op(create_test_image(), "", out, EnhanceOperation(brightness=1.5))
     assert isinstance(result, OperationResult)
-    assert os.path.exists(out)

@@ -1,65 +1,49 @@
 from PIL import Image
-from shared.result import OperationResult
+from editor.operations import ResizeOperation
 from editor.pipeline import run_single_op
-from editor.resize import process_resize
+from shared.result import OperationResult
 
 
 def create_test_image():
-    img = Image.new("RGB", (1200, 800), color=(255, 0, 0))
-    return img
+    return Image.new("RGB", (1200, 800), color=(255, 0, 0))
 
 
-DEFAULT_RESIZE = dict(
-    width=None, height=None, scale=None, keep_ratio=True, resample="LANCZOS"
-)
-
-
-def test_process_resize_by_width(tmp_path):
-    img, result = process_resize(create_test_image(), 600, None, None, True, "LANCZOS")
+def test_resize_by_width():
+    img, result = ResizeOperation(width=600).apply(create_test_image())
     assert img.size == (600, 400)
     assert result["dimensions"]["original"] == (1200, 800)
 
 
-def test_process_resize_by_scale(tmp_path):
-    img, result = process_resize(create_test_image(), None, None, 0.5, True, "LANCZOS")
+def test_resize_by_scale():
+    img, result = ResizeOperation(scale=0.5).apply(create_test_image())
     assert img.size == (600, 400)
 
 
-def test_process_resize_exact(tmp_path):
-    img, result = process_resize(
-        create_test_image(), 640, 480, None, False, "LANCZOS"
-    )
+def test_resize_exact():
+    img, result = ResizeOperation(width=640, height=480, keep_ratio=False).apply(create_test_image())
     assert img.size == (640, 480)
 
 
-def test_process_resize_thumbnail_fits_box(tmp_path):
-    img, result = process_resize(create_test_image(), 600, 400, None, True, "LANCZOS")
+def test_resize_thumbnail_fits_box():
+    img, result = ResizeOperation(width=600, height=400, keep_ratio=True).apply(create_test_image())
     assert img.size == (600, 400)
 
 
-def test_resize_by_width(tmp_path):
+def test_resize_by_height():
+    img, result = ResizeOperation(height=400).apply(create_test_image())
+    assert img.size == (600, 400)
+
+
+def test_resize_no_params_errors():
+    import pytest
+    with pytest.raises(ValueError, match="Must specify width, height, or scale"):
+        ResizeOperation().apply(create_test_image())
+
+
+def test_run_single_op_resize(tmp_path):
     out = str(tmp_path / "output.jpg")
-    result = run_single_op(create_test_image(), "", out, "resize", **{**DEFAULT_RESIZE, "width": 600})
+    result = run_single_op(create_test_image(), "", out, ResizeOperation(width=600))
     assert isinstance(result, OperationResult)
     assert result.output_path == out
     img = Image.open(result.output_path)
     assert img.size == (600, 400)
-
-
-def test_resize_by_scale(tmp_path):
-    out = str(tmp_path / "output.jpg")
-    result = run_single_op(create_test_image(), "", out, "resize", **{**DEFAULT_RESIZE, "scale": 0.5})
-    assert isinstance(result, OperationResult)
-    img = Image.open(result.output_path)
-    assert img.size == (600, 400)
-
-
-def test_resize_exact_dimensions(tmp_path):
-    out = str(tmp_path / "output.jpg")
-    result = run_single_op(
-        create_test_image(), "", out, "resize",
-        **{**DEFAULT_RESIZE, "width": 640, "height": 480, "keep_ratio": False},
-    )
-    assert isinstance(result, OperationResult)
-    img = Image.open(result.output_path)
-    assert img.size == (640, 480)

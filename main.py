@@ -1,9 +1,9 @@
 import click
-from editor._defaults import QUALITY, RESAMPLE, KEEP_RATIO, PROGRESSIVE, STRIP_METADATA, SUFFIXES
-from editor.pipeline import run_pipeline, run_single_op
+from editor._defaults import KEEP_RATIO, PROGRESSIVE, QUALITY, RESAMPLE, STRIP_METADATA, SUFFIXES
+from editor.operations import EnhanceOperation, OptimizeOperation, ResizeOperation
 from editor.tui import run_interactive_tui, run_tui_resize
 from utils.display import print_banner, print_success, print_error, print_diff
-from utils.runner import run_operation
+from utils.runner import run_operation, run_pipeline_operation
 
 
 @click.group(invoke_without_command=True, no_args_is_help=False)
@@ -26,10 +26,8 @@ def cli(ctx):
 @click.option("--output", "-o", default=None)
 def resize_cmd(input_path, output, width, height, scale, keep_ratio, resample):
     run_operation(
-        input_path, output, SUFFIXES["resize"], run_single_op,
-        op="resize",
-        width=width, height=height, scale=scale,
-        keep_ratio=keep_ratio, resample=resample,
+        input_path, output, SUFFIXES["resize"],
+        ResizeOperation(width=width, height=height, scale=scale, keep_ratio=keep_ratio, resample=resample),
     )
 
 
@@ -42,10 +40,8 @@ def resize_cmd(input_path, output, width, height, scale, keep_ratio, resample):
 @click.option("--output", "-o", default=None)
 def optimize_cmd(input_path, output, quality, target_format, strip_metadata, progressive):
     run_operation(
-        input_path, output, SUFFIXES["optimize"], run_single_op,
-        op="optimize",
-        quality=quality, target_format=target_format,
-        strip_metadata=strip_metadata, progressive=progressive,
+        input_path, output, SUFFIXES["optimize"],
+        OptimizeOperation(quality=quality, target_format=target_format, strip_metadata=strip_metadata, progressive=progressive),
     )
 
 
@@ -61,11 +57,8 @@ def optimize_cmd(input_path, output, quality, target_format, strip_metadata, pro
 @click.option("--output", "-o", default=None)
 def enhance_cmd(input_path, output, brightness, contrast, sharpness, saturation, auto, denoise, grayscale):
     run_operation(
-        input_path, output, SUFFIXES["enhance"], run_single_op,
-        op="enhance",
-        brightness=brightness, contrast=contrast,
-        sharpness=sharpness, saturation=saturation,
-        auto_enhance=auto, denoise=denoise, grayscale=grayscale,
+        input_path, output, SUFFIXES["enhance"],
+        EnhanceOperation(brightness=brightness, contrast=contrast, sharpness=sharpness, saturation=saturation, auto_enhance=auto, denoise=denoise, grayscale=grayscale),
     )
 
 
@@ -74,10 +67,8 @@ def enhance_cmd(input_path, output, brightness, contrast, sharpness, saturation,
 @click.option("--steps", "-s", default=None)
 @click.option("--output", "-o", default=None)
 def pipeline_cmd(input_path, output, steps):
-    run_operation(
-        input_path, output, SUFFIXES["pipeline"], run_pipeline,
-        steps_json=steps,
-        handle_result=lambda r: [print_diff(s) for s in r.steps],
+    run_pipeline_operation(
+        input_path, output, SUFFIXES["pipeline"], steps,
     )
 
 

@@ -2,7 +2,8 @@ from PIL import Image
 import click
 
 from shared.result import OperationResult
-from editor._defaults import QUALITY, SUFFIXES
+from editor._defaults import SUFFIXES
+from editor.operations import EnhanceOperation, OptimizeOperation, ResizeOperation
 from editor.pipeline import run_single_op
 from utils.file_handler import get_output_path, validate_image
 
@@ -20,9 +21,8 @@ def run_tui_resize(
     out = get_output_path(input_path, output_path, SUFFIXES["tui_resize"])
 
     return run_single_op(
-        img, input_path, out, "resize",
-        width=width, height=height, scale=scale,
-        keep_ratio=keep_ratio, resample=resample,
+        img, input_path, out,
+        ResizeOperation(width=width, height=height, scale=scale, keep_ratio=keep_ratio, resample=resample),
     )
 
 
@@ -95,7 +95,7 @@ def _interactive_resize(input_path: str, output_path: str | None) -> dict:
 def _interactive_optimize(input_path: str, output_path: str | None) -> dict:
     img = validate_image(input_path)
     out = get_output_path(input_path, output_path, SUFFIXES["tui_optimize"])
-    quality = click.prompt("Quality", type=int, default=QUALITY)
+    quality = click.prompt("Quality", type=int, default=85)
     target_format = _blank_to_none(
         click.prompt("Target format", default="", show_default=False)
     )
@@ -105,9 +105,8 @@ def _interactive_optimize(input_path: str, output_path: str | None) -> dict:
     progressive = click.confirm("Progressive", default=False)
 
     return run_single_op(
-        img, input_path, out, "optimize",
-        quality=quality, target_format=target_format,
-        strip_metadata=strip_metadata, progressive=progressive,
+        img, input_path, out,
+        OptimizeOperation(quality=quality, target_format=target_format, strip_metadata=strip_metadata, progressive=progressive),
     )
 
 
@@ -127,10 +126,8 @@ def _interactive_enhance(input_path: str, output_path: str | None) -> dict:
     grayscale = click.confirm("Grayscale", default=False)
 
     return run_single_op(
-        img, input_path, out, "enhance",
-        brightness=brightness, contrast=contrast,
-        sharpness=sharpness, saturation=saturation,
-        auto_enhance=auto_enhance, denoise=denoise, grayscale=grayscale,
+        img, input_path, out,
+        EnhanceOperation(brightness=brightness, contrast=contrast, sharpness=sharpness, saturation=saturation, auto_enhance=auto_enhance, denoise=denoise, grayscale=grayscale),
     )
 
 
