@@ -1,11 +1,15 @@
 from PIL import Image
 import click
+from rich.console import Console
+from rich.panel import Panel
 
 from shared.result import OperationResult
 from editor._defaults import SUFFIXES
 from editor.operations import EnhanceOperation, OptimizeOperation, ResizeOperation
 from editor.pipeline import run_single_op
 from utils.file_handler import get_output_path, validate_image
+
+console = Console()
 
 
 def run_tui_resize(
@@ -26,8 +30,8 @@ def run_tui_resize(
     )
 
 
-def run_interactive_tui() -> dict | None:
-    click.echo("Select operation")
+def run_interactive_tui() -> OperationResult | None:
+    console.print(Panel("[bold]Select operation[/bold]", border_style="cyan"))
     operation = click.prompt(
         "Operation",
         type=click.Choice(["resize", "optimize", "enhance", "exit"], case_sensitive=False),
@@ -35,7 +39,7 @@ def run_interactive_tui() -> dict | None:
     ).lower()
 
     if operation == "exit":
-        click.echo("Bye")
+        console.print("[yellow]Bye![/yellow]")
         return None
 
     input_path = click.prompt("Input image path")
@@ -43,20 +47,20 @@ def run_interactive_tui() -> dict | None:
 
     if operation == "resize":
         result = _interactive_resize(input_path, output_path)
-        click.echo("TUI resize complete")
+        console.print("[bold green]TUI resize complete[/bold green]")
         return result
 
     if operation == "optimize":
         result = _interactive_optimize(input_path, output_path)
-        click.echo("TUI optimize complete")
+        console.print("[bold green]TUI optimize complete[/bold green]")
         return result
 
     result = _interactive_enhance(input_path, output_path)
-    click.echo("TUI enhance complete")
+    console.print("[bold green]TUI enhance complete[/bold green]")
     return result
 
 
-def _interactive_resize(input_path: str, output_path: str | None) -> dict:
+def _interactive_resize(input_path: str, output_path: str | None) -> OperationResult:
     mode = click.prompt(
         "Resize by",
         type=click.Choice(["width", "height", "scale", "exact"], case_sensitive=False),
@@ -81,18 +85,19 @@ def _interactive_resize(input_path: str, output_path: str | None) -> dict:
         default="LANCZOS",
     ).upper()
 
-    return run_tui_resize(
-        input_path,
-        output_path,
-        width=width,
-        height=height,
-        scale=scale,
-        keep_ratio=keep_ratio,
-        resample=resample,
-    )
+    with console.status("[bold green]Resizing...[/bold green]"):
+        return run_tui_resize(
+            input_path,
+            output_path,
+            width=width,
+            height=height,
+            scale=scale,
+            keep_ratio=keep_ratio,
+            resample=resample,
+        )
 
 
-def _interactive_optimize(input_path: str, output_path: str | None) -> dict:
+def _interactive_optimize(input_path: str, output_path: str | None) -> OperationResult:
     img = validate_image(input_path)
     out = get_output_path(input_path, output_path, SUFFIXES["tui_optimize"])
     quality = click.prompt("Quality", type=int, default=85)
@@ -104,13 +109,14 @@ def _interactive_optimize(input_path: str, output_path: str | None) -> dict:
     strip_metadata = click.confirm("Strip metadata", default=False)
     progressive = click.confirm("Progressive", default=False)
 
-    return run_single_op(
-        img, input_path, out,
-        OptimizeOperation(quality=quality, target_format=target_format, strip_metadata=strip_metadata, progressive=progressive),
-    )
+    with console.status("[bold green]Optimizing...[/bold green]"):
+        return run_single_op(
+            img, input_path, out,
+            OptimizeOperation(quality=quality, target_format=target_format, strip_metadata=strip_metadata, progressive=progressive),
+        )
 
 
-def _interactive_enhance(input_path: str, output_path: str | None) -> dict:
+def _interactive_enhance(input_path: str, output_path: str | None) -> OperationResult:
     img = validate_image(input_path)
     out = get_output_path(input_path, output_path, SUFFIXES["tui_enhance"])
     auto_enhance = click.confirm("Auto enhance", default=True)
@@ -125,10 +131,11 @@ def _interactive_enhance(input_path: str, output_path: str | None) -> dict:
     denoise = click.confirm("Denoise", default=False)
     grayscale = click.confirm("Grayscale", default=False)
 
-    return run_single_op(
-        img, input_path, out,
-        EnhanceOperation(brightness=brightness, contrast=contrast, sharpness=sharpness, saturation=saturation, auto_enhance=auto_enhance, denoise=denoise, grayscale=grayscale),
-    )
+    with console.status("[bold green]Enhancing...[/bold green]"):
+        return run_single_op(
+            img, input_path, out,
+            EnhanceOperation(brightness=brightness, contrast=contrast, sharpness=sharpness, saturation=saturation, auto_enhance=auto_enhance, denoise=denoise, grayscale=grayscale),
+        )
 
 
 def _blank_to_none(value: str) -> str | None:
